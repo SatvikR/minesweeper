@@ -17,8 +17,8 @@
 
 typedef struct CellCoordinate
 {
-    int col;
     int row;
+    int col;
 } CellCoordinate;
 
 typedef struct Cell
@@ -79,6 +79,7 @@ void printBoard(void)
 // row and col of the first click
 void initBoard(int row, int col)
 {
+    printf("rc: %d, %d\n", row, col);
     int i, j;
 
 placeMines:
@@ -317,34 +318,34 @@ CellCoordinate calculateCellClicked(void)
     Vector2 mousePos = GetMousePosition();
 
     return (CellCoordinate) {
-        .row = ((int) mousePos.x) / CELL_WIDTH,
-        .col = ((int) mousePos.y) / CELL_WIDTH
+        .col = ((int) mousePos.x) / CELL_WIDTH,
+        .row = ((int) mousePos.y) / CELL_WIDTH
     };
 }
 
-void discoverCell(int col, int row)
+void discoverCell(int row, int col)
 {
     if (
-        col < 0 || col >= BOARD_HEIGHT ||
-        row < 0 || row >= BOARD_WIDTH
+        row < 0 || row >= BOARD_HEIGHT ||
+        col < 0 || col >= BOARD_WIDTH
     )
     {
         return;
     }
 
-    if (state.cells[col][row].isDiscovered || state.cells[col][row].isFlag)
+    if (state.cells[row][col].isDiscovered || state.cells[row][col].isFlag)
         return;
 
-    state.cells[col][row].isDiscovered = true;
+    state.cells[row][col].isDiscovered = true;
 
-    if (state.cells[col][row].num == 0)
+    if (state.cells[row][col].num == 0)
     {
         int i, j;
-        for (i = col-1; i < col+2; i++)
+        for (i = row-1; i < row+2; i++)
         {
-            for (j = row-1; j < row+2; j++)
+            for (j = col-1; j < col+2; j++)
             {
-                if (i == col && j == row)
+                if (i == row && j == col)
                     continue;
 
                 discoverCell(i, j);
@@ -376,7 +377,7 @@ void init(void)
 {
     srand((unsigned int)time(NULL));
 
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "raylib [core] example - basic window");
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Minesweeper");
 
     state.flagTexture = LoadTexture("assets/flag.png");
 
@@ -535,7 +536,7 @@ bool draw(void)
             if (state.firstClick)
             {
                 CellCoordinate cellClicked = calculateCellClicked();
-                int row = cellClicked.row, col = cellClicked.col;
+                int row = cellClicked.col, col = cellClicked.row;
 
                 state.cells[col][row].isFlag = !state.cells[col][row].isFlag;
 
@@ -548,23 +549,22 @@ bool draw(void)
         else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
             CellCoordinate cellClicked = calculateCellClicked();
-            int row = cellClicked.row, col = cellClicked.col;
+            int col = cellClicked.col, row = cellClicked.row;
 
             if (!state.firstClick)
             {
                 initBoard(row, col);
                 state.firstClick = true;
                 state.initTime = GetTime();
-                printBoard();
             }
-            else if (state.cells[col][row].isFlag)
+            else if (state.cells[row][col].isFlag)
                 return false;
-            else if (state.cells[col][row].isMine)
+            else if (state.cells[row][col].isMine)
                 return true;
-            else if (state.cells[col][row].isDiscovered)
+            else if (state.cells[row][col].isDiscovered)
                 return false;
 
-            discoverCell(col, row);
+            discoverCell(row, col);
             if (checkWin())
             {
                 state.hasWon = true;
@@ -590,7 +590,7 @@ int main(void)
             initState();
     }
 
-    CloseWindow();
+    close();
 
     return 0;
 }
